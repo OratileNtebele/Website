@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+  <title>happy birthday my love ❤️</title>
+  <!-- tailwind + fonts + three + gsap + confetti -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700&family=Playfair+Display:ital@0;1&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0f0a12;
+      font-family: 'Quicksand', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .gradient-bg {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: radial-gradient(circle at 30% 50%, rgba(255, 150, 200, 0.15) 0%, transparent 60%),
+                  radial-gradient(circle at 80% 70%, rgba(200, 150, 250, 0.12) 0%, transparent 60%);
+      z-index: 0;
+    }
+    /* Heart canvas - BEHIND images, filling ENTIRE screen */
+    #heartCanvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 5;
+      pointer-events: none;
+      display: block;
+    }
+    .main-card {
+      background: rgba(22, 16, 24, 0.85);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid rgba(255, 200, 230, 0.25);
+      border-radius: 48px;
+      box-shadow: 0 30px 70px -20px #000;
+      max-width: 1200px;
+      width: 100%;
+      position: relative;
+      z-index: 10;
+      padding: 2rem;
+    }
+    .step {
+      transition: opacity 0.6s cubic-bezier(0.2, 0.9, 0.3, 1), 
+                  transform 0.6s cubic-bezier(0.2, 0.9, 0.3, 1);
+    }
+    .step-hidden {
+      opacity: 0;
+      transform: scale(0.92);
+      pointer-events: none;
+      position: absolute;
+      width: 100%;
+    }
+    .step-visible {
+      opacity: 1;
+      transform: scale(1);
+      pointer-events: auto;
+      position: relative;
+    }
+    .btn-love {
+      background: rgba(255, 210, 235, 0.15);
+      border: 1px solid rgba(255, 180, 220, 0.6);
+      color: #ffe4f0;
+      font-weight: 600;
+      padding: 14px 42px;
+      border-radius: 60px;
+      font-size: 1.25rem;
+      backdrop-filter: blur(12px);
+      transition: all 0.3s;
+      cursor: pointer;
+      position: relative;
+      z-index: 20;
+    }
+    .btn-love:hover {
+      background: rgba(255, 180, 220, 0.3);
+      border-color: #ffb0e0;
+      color: white;
+      transform: scale(1.02);
+    }
+    .media-frame {
+      border-radius: 28px;
+      background: transparent;
+      border: 2px solid rgba(255, 150, 200, 0.6);
+      padding: 0.5rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 1rem auto;
+      width: 100%;
+      max-width: 350px;
+      position: relative;
+      z-index: 30;
+    }
+    .media-frame img, .media-frame video {
+      width: 100%;
+      height: auto;
+      max-height: 300px;
+      object-fit: contain;
+      border-radius: 20px;
+      border: 3px solid #ffb0d0;
+      background: transparent;
+      box-shadow: 0 10px 20px -5px rgba(255, 100, 150, 0.3);
+      position: relative;
+      z-index: 35;
+    }
+    .handwriting {
+      font-family: 'Playfair Display', serif;
+      font-style: italic;
+      background: linear-gradient(145deg, #ffd0e8, #ffb0d0);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .final-message {
+      font-size: clamp(3rem, 12vw, 5.5rem);
+      font-weight: 600;
+      line-height: 1.1;
+      text-align: center;
+      color: #ffecf5;
+      text-shadow: 0 0 35px #ffaad0, 3px 5px 0 #3a2430;
+      position: relative;
+      z-index: 20;
+    }
+    .dot-indicator {
+      width: 12px; height: 12px;
+      border-radius: 30px;
+      background: #ffb8d0;
+      opacity: 0.3;
+      transition: all 0.4s;
+      position: relative;
+      z-index: 20;
+    }
+    .dot-indicator.active {
+      width: 36px;
+      opacity: 1;
+      background: #ff8ec0;
+      box-shadow: 0 0 20px #ffa0d0;
+    }
+    .album-container {
+      width: 100%;
+      max-height: 500px;
+      overflow-y: auto;
+      padding: 20px 12px;
+      background: transparent;
+      border-radius: 36px;
+      margin-top: 20px;
+      position: relative;
+      z-index: 25;
+    }
+    .album-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 15px;
+      width: 100%;
+    }
+    .album-item {
+      background: transparent;
+      border-radius: 20px;
+      border: 1px solid rgba(255, 180, 210, 0.5);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 8px;
+      transition: transform 0.2s;
+      position: relative;
+      z-index: 30;
+    }
+    .album-item:hover {
+      transform: scale(1.02);
+      border-color: #ffb0e0;
+    }
+    .album-item img, .album-item video {
+      width: 100%;
+      height: 130px;
+      object-fit: contain;
+      border-radius: 12px;
+      border: 2px solid #ffb0d0;
+      background: transparent;
+      position: relative;
+      z-index: 35;
+    }
+    .album-item video {
+      height: 130px;
+    }
+    .music-control {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 50;
+      background: rgba(255, 180, 210, 0.3);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 200, 230, 0.6);
+      border-radius: 50px;
+      padding: 12px 20px;
+      color: white;
+      font-size: 1.2rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.3s;
+    }
+    .music-control:hover {
+      background: rgba(255, 180, 210, 0.5);
+      transform: scale(1.05);
+    }
+    h1, p, span, button {
+      position: relative;
+      z-index: 20;
+    }
+  </style>
+</head>
+<body>
+  <!-- Heart Rain Canvas - BEHIND images, filling ENTIRE screen width -->
+  <canvas id="heartCanvas"></canvas>
+  <div class="gradient-bg"></div>
+  
+  <!-- Music Control Button -->
+  <div class="music-control" id="musicToggle">
+    <span id="musicIcon">🔊</span>
+    <span id="musicText">Pause Music</span>
+  </div>
+
+  <div class="main-card">
+    <div class="relative min-h-[600px] flex flex-col items-center">
+
+      <!-- STEP 1 -->
+      <div id="step1" class="step step-visible w-full text-center">
+        <span class="text-8xl mb-2 inline-block">🎀</span>
+        <h1 class="text-5xl md:text-6xl font-light text-white">for <span class="handwriting">Thato</span></h1>
+        <p class="text-2xl text-pink-200/80 mt-2">(my bubs, my everything)</p>
+        <div class="flex justify-center">
+          <div class="media-frame">
+            <img src="WhatsApp Image 2026-02-23 at 11.19.43 AM.jpeg" alt="us being cute">
+          </div>
+        </div>
+        <button id="next1" class="btn-love mt-4">continue →</button>
+      </div>
+
+      <!-- STEP 2 -->
+      <div id="step2" class="step step-hidden w-full text-center">
+        <span class="text-7xl">💝</span>
+        <p class="text-3xl md:text-4xl text-white/90 mt-4"><span class="handwriting">bubs</span>, you make</p>
+        <p class="text-4xl font-light text-pink-200">everything softer</p>
+        <div class="flex justify-center">
+          <div class="media-frame">
+            <img src="WhatsApp Image 2026-02-23 at 11.28.03 AM.jpeg" alt="thato's smile">
+          </div>
+        </div>
+        <button id="next2" class="btn-love mt-4">next →</button>
+      </div>
+
+      <!-- STEP 3 -->
+      <div id="step3" class="step step-hidden w-full text-center">
+        <span class="text-6xl">✨</span>
+        <p class="text-4xl text-white mt-4">to many more</p>
+        <p class="text-5xl handwriting text-pink-200">silly moments</p>
+        <div class="flex justify-center">
+          <div class="media-frame">
+            <video controls src="WhatsApp Video 2026-02-23 at 11.33.54 AM.mp4"></video>
+          </div>
+        </div>
+        <button id="next3" class="btn-love mt-4">almost there →</button>
+      </div>
+
+      <!-- STEP 4 -->
+      <div id="step4" class="step step-hidden w-full text-center">
+        <span class="text-7xl">❤️</span>
+        <p class="text-4xl md:text-5xl font-light text-white mt-4">Thato · bubs</p>
+        <p class="text-xl text-pink-200/90 mt-2">one click – and ALL 30 memories appear</p>
+        <div class="flex justify-center">
+          <div class="media-frame">
+            <img src="WhatsApp Image 2026-02-23 at 11.29.41 AM.jpeg" alt="favourite portrait">
+          </div>
+        </div>
+        <button id="celebrateBtn" class="btn-love text-2xl py-6 px-14 mt-6">Celebrate!</button>
+      </div>
+
+      <!-- FINAL STEP - ALBUM WITH ALL 30 FILES (VIDEOS PLAY AUTOMATICALLY) -->
+      <div id="finalStep" class="step step-hidden w-full text-center">
+        <div class="final-message">
+          Happy Birthday,<br> my <span class="handwriting">love</span>
+        </div>
+        <p class="text-3xl text-[#ffbfe0] animate-pulse mt-2">❤️ bubs ❤️</p>
+        
+        <!-- ALBUM WITH YOUR 30 FILES - VIDEOS PLAY AUTOMATICALLY -->
+        <div class="album-container">
+          <div class="album-grid" id="albumGrid"></div>
+        </div>
+        <p class="text-xs text-pink-300/70 mt-3">✨ 30 beautiful memories - videos play automatically ✨</p>
+      </div>
+    </div>
+
+    <!-- step indicators -->
+    <div class="flex justify-center gap-2 mt-8">
+      <div class="dot-indicator" id="dot1"></div>
+      <div class="dot-indicator" id="dot2"></div>
+      <div class="dot-indicator" id="dot3"></div>
+      <div class="dot-indicator" id="dot4"></div>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      // Step elements
+      const s1 = document.getElementById('step1');
+      const s2 = document.getElementById('step2');
+      const s3 = document.getElementById('step3');
+      const s4 = document.getElementById('step4');
+      const sFinal = document.getElementById('finalStep');
+      const albumGrid = document.getElementById('albumGrid');
+
+      const next1 = document.getElementById('next1');
+      const next2 = document.getElementById('next2');
+      const next3 = document.getElementById('next3');
+      const celebrate = document.getElementById('celebrateBtn');
+
+      const dot1 = document.getElementById('dot1');
+      const dot2 = document.getElementById('dot2');
+      const dot3 = document.getElementById('dot3');
+      const dot4 = document.getElementById('dot4');
+      const dots = [dot1, dot2, dot3, dot4];
+
+      // YOUR 30 FILES
+      const mediaFiles = [
+        // Videos (mp4)
+        { type: 'video', name: 'd3d4d0b511064eb6896315884302b68a.mp4' },
+        { type: 'video', name: 'lv_7543654123611163965_20251121010221.mp4' },
+        { type: 'video', name: 'VID_20250903_020645_087.mp4' },
+        { type: 'video', name: 'VID-20251011-WA0032.mp4' },
+        { type: 'video', name: 'VID-20251011-WA0036.mp4' },
+        { type: 'video', name: 'VID-20251130-WA0011.mp4' },
+        { type: 'video', name: 'VID-20251201-WA0006.mp4' },
+        { type: 'video', name: 'VID-20251204-WA0015.mp4' },
+        { type: 'video', name: 'VID-20251214-WA0010.mp4' },
+        { type: 'video', name: 'VID-20260124-WA0024.mp4' },
+        { type: 'video', name: 'VID-20260124-WA0066.mp4' },
+        { type: 'video', name: 'VID-20260214-WA0041.mp4' },
+        { type: 'video', name: 'VID-20260216-WA0022.mp4' },
+        { type: 'video', name: 'VID-20260216-WA0023.mp4' },
+        { type: 'video', name: 'VID-20260216-WA0027.mp4' },
+        { type: 'video', name: 'WhatsApp Video 2026-02-23 at 11.33.54 AM.mp4' },
+        
+        // Images (jpg, webp)
+        { type: 'image', name: 'IMG_20250905_165533.jpg' },
+        { type: 'image', name: 'IMG_20250910_120220_539.webp' },
+        { type: 'image', name: 'IMG_20251122_161200.jpg' },
+        { type: 'image', name: 'IMG-20251011-WA0034.jpg' },
+        { type: 'image', name: 'IMG-20251023-WA0030.jpg' },
+        { type: 'image', name: 'IMG-20251030-WA0040.jpg' },
+        { type: 'image', name: 'IMG-20251030-WA0042.jpg' },
+        { type: 'image', name: 'IMG-20260124-WA0069.jpg' },
+        { type: 'image', name: 'IMG-20260126-WA0020.jpg' },
+        { type: 'image', name: 'IMG-20260214-WA0028.jpg' },
+        { type: 'image', name: 'IMG-20260214-WA0050.jpg' },
+        { type: 'image', name: 'WhatsApp Image 2026-02-23 at 11.19.43 AM.jpeg' },
+        { type: 'image', name: 'WhatsApp Image 2026-02-23 at 11.28.03 AM.jpeg' },
+        { type: 'image', name: 'WhatsApp Image 2026-02-23 at 11.29.41 AM.jpeg' }
+      ];
+
+      // Populate album grid with videos that play automatically
+      function populateAlbum() {
+        albumGrid.innerHTML = '';
+        mediaFiles.forEach(file => {
+          const item = document.createElement('div');
+          item.className = 'album-item';
+          
+          if (file.type === 'image') {
+            const img = document.createElement('img');
+            img.src = file.name;
+            img.alt = 'memory';
+            img.loading = 'lazy';
+            img.onerror = function() {
+              this.onerror = null;
+              this.style.display = 'none';
+              const icon = document.createElement('div');
+              icon.style.fontSize = '3rem';
+              icon.style.padding = '20px';
+              icon.innerHTML = '🖼️';
+              icon.style.background = 'transparent';
+              this.parentNode.insertBefore(icon, this.nextSibling);
+            };
+            item.appendChild(img);
+          } else {
+            const video = document.createElement('video');
+            video.src = file.name;
+            video.muted = true;
+            video.loop = true;
+            video.playsInline = true;
+            video.autoplay = true; // PLAYS AUTOMATICALLY
+            video.preload = 'auto'; // Preload video data
+            
+            // Start playing as soon as possible
+            video.onloadeddata = () => {
+              video.play().catch(e => console.log('Video autoplay prevented:', e));
+            };
+            
+            video.onerror = function() {
+              this.style.display = 'none';
+              const icon = document.createElement('div');
+              icon.style.fontSize = '3rem';
+              icon.style.padding = '20px';
+              icon.innerHTML = '🎥';
+              icon.style.background = 'transparent';
+              this.parentNode.insertBefore(icon, this.nextSibling);
+            };
+            
+            item.appendChild(video);
+          }
+          albumGrid.appendChild(item);
+        });
+        
+        // Ensure videos play after grid is populated
+        setTimeout(() => {
+          document.querySelectorAll('.album-item video').forEach(video => {
+            video.play().catch(e => console.log('Delayed video play failed:', e));
+          });
+        }, 500);
+      }
+
+      function setActiveDot(index) {
+        dots.forEach((d, i) => {
+          if (i === index) d.classList.add('active');
+          else d.classList.remove('active');
+        });
+      }
+
+      function showStep(step) {
+        [s1, s2, s3, s4, sFinal].forEach(el => {
+          el.classList.remove('step-visible');
+          el.classList.add('step-hidden');
+        });
+        if (step === 1) { s1.classList.remove('step-hidden'); s1.classList.add('step-visible'); setActiveDot(0); }
+        else if (step === 2) { s2.classList.remove('step-hidden'); s2.classList.add('step-visible'); setActiveDot(1); }
+        else if (step === 3) { s3.classList.remove('step-hidden'); s3.classList.add('step-visible'); setActiveDot(2); }
+        else if (step === 4) { s4.classList.remove('step-hidden'); s4.classList.add('step-visible'); setActiveDot(3); }
+        else if (step === 'final') { 
+          sFinal.classList.remove('step-hidden'); 
+          sFinal.classList.add('step-visible'); 
+          dots.forEach(d => d.classList.remove('active'));
+          populateAlbum();
+        }
+      }
+
+      next1.addEventListener('click', () => showStep(2));
+      next2.addEventListener('click', () => showStep(3));
+      next3.addEventListener('click', () => showStep(4));
+
+      // ========== SMALLER HEART RAIN - FULL SCREEN WIDTH ==========
+      let scene, camera, renderer, hearts = [];
+      const canvas = document.getElementById('heartCanvas');
+
+      function initSmallHeartRain() {
+        scene = new THREE.Scene();
+        camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.z = 50;
+        camera.position.y = 0;
+        
+        renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+        // Soft pink lighting
+        const ambientLight = new THREE.AmbientLight(0x443366);
+        scene.add(ambientLight);
+        
+        const light1 = new THREE.PointLight(0xffaacc, 3.0, 100);
+        light1.position.set(15, 25, 40);
+        scene.add(light1);
+        
+        const light2 = new THREE.PointLight(0xd0a0ff, 2.5, 100);
+        light2.position.set(-15, 20, 45);
+        scene.add(light2);
+
+        // Create SMALLER heart shape
+        function createSmallHeart(color, size = 0.4) {
+          const group = new THREE.Group();
+          
+          const material = new THREE.MeshPhongMaterial({ 
+            color: color,
+            emissive: 0x442244,
+            shininess: 40,
+            transparent: true,
+            opacity: 0.8
+          });
+          
+          // Two spheres for top
+          const sphere1 = new THREE.Mesh(new THREE.SphereGeometry(0.5, 12), material);
+          sphere1.position.set(-0.5, 0.3, 0);
+          sphere1.scale.set(0.9, 0.9, 0.3);
+          group.add(sphere1);
+          
+          const sphere2 = new THREE.Mesh(new THREE.SphereGeometry(0.5, 12), material);
+          sphere2.position.set(0.5, 0.3, 0);
+          sphere2.scale.set(0.9, 0.9, 0.3);
+          group.add(sphere2);
+          
+          // Cone for bottom
+          const cone = new THREE.Mesh(new THREE.ConeGeometry(0.7, 1.0, 8), material);
+          cone.position.set(0, -0.3, 0);
+          cone.rotation.x = Math.PI;
+          cone.scale.set(0.9, 0.6, 0.3);
+          group.add(cone);
+          
+          // Small sparkle
+          const spark = new THREE.Mesh(
+            new THREE.SphereGeometry(0.1, 4),
+            new THREE.MeshPhongMaterial({ color: 0xfff0f8, emissive: 0x882244 })
+          );
+          spark.position.set(0, 0.1, 0.2);
+          group.add(spark);
+          
+          group.scale.set(size, size, size);
+          return group;
+        }
+
+        const colors = [0xff4d6d, 0xff7090, 0xff8aa8, 0xffa5c0, 0xffb8d9, 0xffc0e0, 0xff99cc, 0xffaad4];
+        
+        // 600 hearts for dense rain effect
+        for (let i = 0; i < 600; i++) {
+          const color = colors[Math.floor(Math.random() * colors.length)];
+          // Size range: 0.2 to 0.6
+          const heart = createSmallHeart(color, 0.2 + Math.random() * 0.4);
+          
+          // For camera at z=50, visible width is about 80 units
+          const worldWidth = 100;
+          const worldHeight = 60;
+          
+          // Spread across FULL width
+          heart.position.x = (Math.random() - 0.5) * worldWidth;
+          
+          // Spread across FULL height
+          heart.position.y = (Math.random() - 0.5) * worldHeight;
+          
+          // Random depth
+          heart.position.z = (Math.random() - 0.5) * 40;
+          
+          // Random rotation
+          heart.rotation.x = Math.random() * Math.PI;
+          heart.rotation.y = Math.random() * Math.PI;
+          heart.rotation.z = Math.random() * Math.PI;
+          
+          // Store fall speed and rotation speed
+          heart.userData = {
+            speed: 0.03 + Math.random() * 0.1,
+            rotationSpeedX: (Math.random() - 0.5) * 0.02,
+            rotationSpeedY: (Math.random() - 0.5) * 0.02,
+            rotationSpeedZ: (Math.random() - 0.5) * 0.02,
+            worldWidth: worldWidth,
+            worldHeight: worldHeight
+          };
+          
+          scene.add(heart);
+          hearts.push(heart);
+        }
+      }
+
+      // Animate small heart rain
+      function animateSmallHeartRain() {
+        requestAnimationFrame(animateSmallHeartRain);
+        
+        hearts.forEach((heart) => {
+          // Move heart down
+          heart.position.y -= heart.userData.speed;
+          
+          // Gentle drift left/right
+          heart.position.x += Math.sin(Date.now() * 0.001 + heart.position.z) * 0.01;
+          
+          // Rotate
+          heart.rotation.x += heart.userData.rotationSpeedX;
+          heart.rotation.y += heart.userData.rotationSpeedY;
+          heart.rotation.z += heart.userData.rotationSpeedZ;
+          
+          // If heart falls below screen, reset to top with FULL WIDTH coverage
+          if (heart.position.y < -heart.userData.worldHeight/2) {
+            heart.position.y = heart.userData.worldHeight/2;
+            // Reset with FULL WIDTH random position
+            heart.position.x = (Math.random() - 0.5) * heart.userData.worldWidth;
+            heart.userData.speed = 0.03 + Math.random() * 0.1;
+          }
+        });
+        
+        if (renderer && scene && camera) {
+          renderer.render(scene, camera);
+        }
+      }
+
+      // ========== BACKGROUND MUSIC - PLAYS AUTOMATICALLY ==========
+      const audio = new Audio();
+      audio.src = "Show Me How.mp3";
+      audio.loop = true;
+      audio.volume = 0.5;
+      
+      // Try to play automatically when page loads
+      let isPlaying = true;
+      
+      function attemptAutoplay() {
+        audio.play().then(() => {
+          console.log("Music started automatically");
+          isPlaying = true;
+          document.getElementById('musicIcon').textContent = '🔊';
+          document.getElementById('musicText').textContent = 'Pause Music';
+        }).catch(error => {
+          console.log("Autoplay prevented by browser - waiting for user interaction");
+          isPlaying = false;
+          document.getElementById('musicIcon').textContent = '🔇';
+          document.getElementById('musicText').textContent = 'Play Music';
+          
+          const startMusicOnInteraction = () => {
+            audio.play().then(() => {
+              isPlaying = true;
+              document.getElementById('musicIcon').textContent = '🔊';
+              document.getElementById('musicText').textContent = 'Pause Music';
+            });
+            document.removeEventListener('click', startMusicOnInteraction);
+            document.removeEventListener('touchstart', startMusicOnInteraction);
+            document.removeEventListener('keydown', startMusicOnInteraction);
+          };
+          
+          document.addEventListener('click', startMusicOnInteraction);
+          document.addEventListener('touchstart', startMusicOnInteraction);
+          document.addEventListener('keydown', startMusicOnInteraction);
+        });
+      }
+
+      const musicToggle = document.getElementById('musicToggle');
+      const musicIcon = document.getElementById('musicIcon');
+      const musicText = document.getElementById('musicText');
+      
+      musicToggle.addEventListener('click', () => {
+        if (isPlaying) {
+          audio.pause();
+          musicIcon.textContent = '🔇';
+          musicText.textContent = 'Play Music';
+          isPlaying = false;
+        } else {
+          audio.play().catch(e => console.log("Play failed:", e));
+          musicIcon.textContent = '🔊';
+          musicText.textContent = 'Pause Music';
+          isPlaying = true;
+        }
+      });
+
+      // ========== CELEBRATION ==========
+      function startCelebration() {
+        gsap.to(celebrate, { opacity: 0, duration: 0.4, onComplete: () => celebrate.style.display='none' });
+        showStep('final');
+
+        // Make hearts fall faster during celebration
+        hearts.forEach(heart => {
+          heart.userData.speed *= 1.8;
+        });
+
+        // Confetti
+        const end = Date.now() + 5000;
+        
+        confetti({ particleCount: 200, spread: 100, origin: { y: 0.6 } });
+        confetti({ particleCount: 200, spread: 100, origin: { y: 0.6, x: 0.2 } });
+        confetti({ particleCount: 200, spread: 100, origin: { y: 0.6, x: 0.8 } });
+        
+        function frame() {
+          if (Date.now() < end) {
+            confetti({ 
+              particleCount: 5, 
+              spread: 70, 
+              origin: { x: Math.random(), y: Math.random() * 0.5 },
+              colors: ['#ff4d6d', '#ff7090', '#ff8aa8', '#ffa5c0', '#ffffff']
+            });
+            requestAnimationFrame(frame);
+          }
+        }
+        frame();
+      }
+
+      // Handle window resize
+      window.addEventListener('resize', () => {
+        if (camera) {
+          camera.aspect = window.innerWidth / window.innerHeight;
+          camera.updateProjectionMatrix();
+          renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+      });
+
+      // Initialize everything
+      window.addEventListener('load', () => {
+        initSmallHeartRain();
+        animateSmallHeartRain();
+        celebrate.addEventListener('click', startCelebration);
+        
+        // Attempt autoplay after a slight delay
+        setTimeout(attemptAutoplay, 500);
+      });
+
+      showStep(1);
+    })();
+  </script>
+</body>
+</html>
